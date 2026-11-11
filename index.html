@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Retirement Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    form {
+      display: grid;
+      gap: 10px;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 1em;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Retirement AI Simulator</h1>
+    <form id="retirement-form">
+      <label>Current Age: <input type="number" id="currentAge" value="25" required></label>
+      <label>Retirement Age: <input type="number" id="retirementAge" value="65" required></label>
+      <label>Expected Lifespan: <input type="number" id="lifespan" value="88" required></label>
+      <label>Current Savings ($): <input type="number" id="savings" value="10000" required></label>
+      <label>Monthly Contribution ($): <input type="number" id="monthly" value="1000" required></label>
+      <label>Annual Return Rate (%): <input type="number" id="rate" value="7" required></label>
+      <label>Retirement Spending / Year ($): <input type="number" id="spend" value="80000" required></label>
+      <button type="submit">Simulate</button>
+    </form>
+
+    <canvas id="retirementChart"></canvas>
+  </div>
+
+  <script>
+    document.getElementById('retirement-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      console.log("Simulate clicked");
+
+      const currentAge = +document.getElementById('currentAge').value;
+      const retirementAge = +document.getElementById('retirementAge').value;
+      const lifespan = +document.getElementById('lifespan').value;
+      const savingsInput = +document.getElementById('savings').value;
+      const monthlyContribution = +document.getElementById('monthly').value;
+      const annualRate = +document.getElementById('rate').value / 100;
+      const annualSpend = +document.getElementById('spend').value;
+
+      let savings = savingsInput;
+      let labels = [];
+      let data = [];
+
+      // Accumulation phase
+      for (let year = 0; year <= retirementAge - currentAge; year++) {
+        for (let month = 0; month < 12; month++) {
+          savings *= 1 + (annualRate / 12);
+          savings += monthlyContribution;
+        }
+        labels.push(currentAge + year);
+        data.push(Math.round(savings));
+      }
+
+      // Decumulation phase
+      for (let year = 1; year <= lifespan - retirementAge; year++) {
+        savings *= 1 + annualRate;
+        savings -= annualSpend;
+        savings = Math.max(savings, 0);
+        labels.push(retirementAge + year);
+        data.push(Math.round(savings));
+        if (savings === 0) break;
+      }
+
+      const ctx = document.getElementById('retirementChart').getContext('2d');
+      if (window.retirementChart) window.retirementChart.destroy();
+      window.retirementChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Savings Over Time',
+            data: data,
+            borderColor: 'green',
+            backgroundColor: 'rgba(0, 128, 0, 0.1)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Age' } },
+            y: { title: { display: true, text: 'Savings ($)' } }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
